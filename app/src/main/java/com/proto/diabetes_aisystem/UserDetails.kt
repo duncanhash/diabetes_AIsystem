@@ -1,70 +1,54 @@
 package com.proto.diabetes_aisystem
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Button
-
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Spacer
-
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
-/**
- * 1. THE DATA MODEL:
- * This is the "Package" we will send to the AI Brain.
- * It groups all the patient information together.
- */
-data class PatientData(
-    val name: String,
-    val age: String,
-    val gender: String,
-    val weight: String
-)
-
-/**
- * 2. THE SCREEN:
- * This is what the user sees and interacts with.
- */
 @Composable
-fun UserDetailsScreen(modifier: Modifier = Modifier) {
-    // These variables hold the text while the user is typing
+fun UserDetailsScreen(
+    onNext: (name: String, age: String, gender: String) -> Unit
+) {
     var patientName by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
+    var age         by remember { mutableStateOf("") }
+    var gender      by remember { mutableStateOf("") }
+    var error       by remember { mutableStateOf("") }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .background(Color(0xFFF5F5F5))
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Enter Patient Details",
-            style = MaterialTheme.typography.headlineMedium
+            text = "Patient Details",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1A237E)
         )
 
-        // Patient Name Input
+        Text(
+            text = "Enter the patient's personal information",
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
+
         OutlinedTextField(
             value = patientName,
             onValueChange = { patientName = it },
-            label = { Text("Patient Name") },
+            label = { Text("Full Name") },
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Age Input
         OutlinedTextField(
             value = age,
             onValueChange = { age = it },
@@ -72,45 +56,38 @@ fun UserDetailsScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Gender Input
-        OutlinedTextField(
-            value = gender,
-            onValueChange = { gender = it },
-            label = { Text("Gender") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        Text(text = "Gender", fontSize = 14.sp, color = Color.DarkGray)
 
-        // Weight Input
-        OutlinedTextField(
-            value = weight,
-            onValueChange = { weight = it },
-            label = { Text("Weight (kg)") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Male", "Female", "Other").forEach { option ->
+                FilterChip(
+                    selected = gender == option,
+                    onClick  = { gender = option },
+                    label    = { Text(option) }
+                )
+            }
+        }
+
+        if (error.isNotEmpty()) {
+            Text(text = error, color = Color.Red, fontSize = 13.sp)
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        /**
-         * 3. THE HANDOFF:
-         * When "Next" is clicked, we pack the data and send it.
-         */
         Button(
-            onClick = { 
-                // We create the 'Package' of data
-                val currentPatient = PatientData(
-                    name = patientName,
-                    age = age,
-                    gender = gender,
-                    weight = weight
-                )
-                
-                // For now, we print it to the logs (the "Console")
-                // This is where the AI team will plug in their "AI Brain" function
-                println("SYSTEM: Sending data to AI Brain -> $currentPatient")
+            onClick = {
+                if (patientName.isEmpty() || age.isEmpty() || gender.isEmpty()) {
+                    error = "Please fill in all fields"
+                } else {
+                    onNext(patientName, age, gender)
+                }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
         ) {
-            Text("Send to AI Brain")
+            Text("Next", fontSize = 16.sp, color = Color.White)
         }
     }
 }
